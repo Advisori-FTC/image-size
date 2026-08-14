@@ -83,8 +83,10 @@ export function findBox(
     const box = readBox(input, currentOffset)
     if (!box) break
     if (box.name === boxName) return box
-    // Fix the infinite loop by ensuring offset always increases
-    // If box.size is 0, advance by at least 8 bytes (the size of the box header)
-    currentOffset += box.size > 0 ? box.size : 8
+    // CVE-2025-71329 hardening: always advance by at least the box-header
+    // size (8). A size of 0 would loop forever; a size of 1..7 would let a
+    // crafted file crawl one byte at a time (DoS). Shared by the ISO-BMFF
+    // based parsers (HEIF and JXL).
+    currentOffset += Math.max(box.size, 8)
   }
 }
