@@ -27,7 +27,11 @@ function extractPartialStreams(input: Uint8Array): Uint8Array[] {
     partialStreams.push(
       input.slice(jxlpBox.offset + 12, jxlpBox.offset + jxlpBox.size),
     )
-    offset = jxlpBox.offset + jxlpBox.size
+    // CVE-2025-71329 hardening: a jxlp box with size 0 leaves offset
+    // unchanged and findBox would return the same box forever.
+    const nextOffset = jxlpBox.offset + Math.max(jxlpBox.size, 8)
+    if (nextOffset <= offset) break
+    offset = nextOffset
   }
   return partialStreams
 }

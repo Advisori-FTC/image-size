@@ -95,6 +95,9 @@ export const ICNS: IImage = {
       const imageHeader = readImageHeader(input, imageOffset)
       const imageSize = getImageSize(imageHeader[0])
       images.push(imageSize)
+      // CVE-2025-71330 hardening: the entry length includes its 8-byte
+      // header; a value <= 8 (or NaN) makes no progress and loops forever.
+      if (!(imageHeader[1] > 8)) break
       imageOffset += imageHeader[1]
     }
 
