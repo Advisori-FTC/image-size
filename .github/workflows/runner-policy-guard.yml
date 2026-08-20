@@ -1,0 +1,41 @@
+# Haelt die Pipelines auf der eigenen Flotte.
+#
+# Ohne diesen Guard waere die Umstellung schleichend rueckgaengig: jeder neue
+# Workflow, der `runs-on: ubuntu-latest` hart hineinschreibt, laeuft wieder bei
+# GitHub und kostet Minuten. Genau das ist waehrend der Umstellung mehrfach
+# passiert.
+name: Runner Policy Guard
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  guard:
+    name: Runner-Policy
+    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Kein hart verdrahteter GitHub-Runner
+        run: |
+          # Erlaubt sind die Variablen-Form sowie macOS und Windows — dafuer
+          # gibt es keine eigene Flotte. Verboten ist der harte Linux-Runner.
+          hits=$(grep -rnE '^[[:space:]]*runs-on:[[:space:]]*ubuntu-' .github/workflows/ \
+                 | grep -v 'vars.CI_RUNNER' || true)
+          if [ -n "$(printf '%s' "$hits" | tr -d '[:space:]')" ]; then
+            echo "::error::Diese Jobs laufen an der eigenen Flotte vorbei bei GitHub:"
+            printf '%s\n' "$hits"
+            echo ""
+            echo "Bitte stattdessen:"
+            # Die Klammern werden zusammengesetzt: GitHub ersetzt ${{ ... }}
+            # auch mitten im Skript, sonst stuende hier der Wert statt der Syntax.
+            printf '  runs-on: %s{{ vars.CI_RUNNER || %s }}\n' '$' "'ubuntu-latest'"
+            printf '  runs-on: %s{{ vars.CI_RUNNER_BIG || %s }}\n' '$' "'ubuntu-latest-8-cores'"
+            echo ""
+            echo "Der Rueckfall bleibt drin: Faellt die Flotte aus, genuegt das"
+            echo "Loeschen der Organisations-Variable, um wieder bei GitHub zu laufen."
+            exit 1
+          fi
+          echo "Alle Workflows beziehen ihren Runner aus der Variable."
