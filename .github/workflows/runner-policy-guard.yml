@@ -29,8 +29,9 @@ jobs:
             printf '%s\n' "$hits"
             echo ""
             echo "Bitte stattdessen:"
-            # Die Klammern werden zusammengesetzt: GitHub ersetzt ${{ ... }}
-            # auch mitten im Skript, sonst stuende hier der Wert statt der Syntax.
+            # Die Klammern setzt printf zusammen. Stuenden sie hier woertlich,
+            # wuerde GitHub sie auswerten -- auch in einem Kommentar -- und der
+            # Workflow waere ungueltig. Genau daran ist er zuvor gescheitert.
             printf '  runs-on: %s{{ vars.CI_RUNNER || %s }}\n' '$' "'ubuntu-latest'"
             printf '  runs-on: %s{{ vars.CI_RUNNER_BIG || %s }}\n' '$' "'ubuntu-latest-8-cores'"
             echo ""
