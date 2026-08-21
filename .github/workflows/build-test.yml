@@ -10,7 +10,7 @@ on:
 
 jobs:
   build-and-test:
-    runs-on: ${{ vars.CI_RUNNER || 'ubuntu-latest' }}
+    runs-on: ubuntu-latest
     strategy:
       matrix:
         node: [ '18', '20']
